@@ -1,6 +1,5 @@
 # Reproducible Research: Peer Assessment 1
-# Reproducible Research Course Project 1
-## by E. H., October 6, 2016
+### by E. H., November 6, 2016
 
 ## Loading and preprocessing the data
 
@@ -38,11 +37,7 @@ library(dplyr)
 ```r
 by_day <- group_by(movement.data, date)
 steps.per.day <- summarise(by_day, steps.per.day = sum(steps, na.rm = TRUE))  
-```
 
-Histogram of the total number of steps taken each day:
-
-```r
 breaks <- ceiling(max(steps.per.day$steps.per.day)/1000)
 hist(steps.per.day$steps.per.day, breaks = breaks, 
      main = "Steps per Day" ,xlab = "Number of Steps", ylab = "Frequency [Days]" )
@@ -50,7 +45,7 @@ hist(steps.per.day$steps.per.day, breaks = breaks,
 
 ![](PA1_template_files/figure-html/histogram original-1.png)<!-- -->
 
-Calculation of the quantiles and the mean of the total steps per day: {#OriginalSummary}
+Calculation of the quantiles and the mean of the total steps per day:
 
 ```r
 summary(steps.per.day$steps.per.day)
@@ -83,26 +78,22 @@ steps.per.interval <- summarise(
     by_interval, steps.per.interval = mean(steps, na.rm = TRUE)) 
 
 p <- ggplot(steps.per.interval, aes(time.of.day, steps.per.interval))
-
 p + labs(title = "Average Number of Steps per 5 Minute Time Interval") +
     geom_line() +
     scale_x_datetime(labels = date_format("%H:%M"))
 ```
 
-![](PA1_template_files/figure-html/time series-1.png)<!-- -->
+![](PA1_template_files/figure-html/time series original-1.png)<!-- -->
 
 The maximum number of steps for a 5 minute interval is in the morning hours
-as can be seen in the previous plot.
+which can also be seen in the previous plot.
 
 ```r
 maxvalue <- subset(
     steps.per.interval, steps.per.interval == max(steps.per.interval))
-c(format(maxvalue$time.of.day, "%H:%M"), maxvalue$steps.per.interval)
+#c(format(maxvalue$time.of.day, "%H:%M"), maxvalue$steps.per.interval)
 ```
-
-```
-## [1] "08:35"            "206.169811320755"
-```
+Maximum number of Steps 206.1698113 at 08:35 AM.
 
 ## Imputing missing values
 
@@ -141,15 +132,6 @@ movement.data.filled$steps.filled <- ifelse(
     movement.data.filled$steps)
 ```
 
-Histogram of the total number of steps taken each day with missing data filled in:
-
-
-```r
-by_day_filled <- group_by(movement.data.filled, date)
-steps.per.day.filled <- summarise(
-    by_day_filled, steps.per.day.filled = sum(steps.filled, na.rm = TRUE))  
-```
-
 Inspect the observations with NA values:
 
 ```r
@@ -172,10 +154,16 @@ summarise(na_dates, steps.per.day = sum(steps.filled))
 ## 8 2012-11-30      10766.19
 ```
 
-The na_dates are a dataframe of 8 groups and $8 days * 288 observations per day = 2304 observations$. That means there are eight whole days with missing steps.
+The na_dates are a dataframe of 8 groups and *8 days x 288 observations per day = 2304 observations*. That means there are eight whole days with missing observations.
+
+Histogram of the total number of steps taken each day with missing data filled in:
 
 
 ```r
+by_day_filled <- group_by(movement.data.filled, date)
+steps.per.day.filled <- summarise(
+    by_day_filled, steps.per.day.filled = sum(steps.filled, na.rm = TRUE))  
+
 breaks <- ceiling(max(steps.per.day.filled$steps.per.day.filled)/1000)
 hist(steps.per.day.filled$steps.per.day.filled, breaks = breaks, 
      main = "Steps per Day With Filled-In Data" ,
@@ -184,7 +172,7 @@ hist(steps.per.day.filled$steps.per.day.filled, breaks = breaks,
 
 ![](PA1_template_files/figure-html/histogram filled-1.png)<!-- -->
 
-The histogram with filled-in data differs from the original one by the eight days filled by daily mean distribution. In the original data these days were counted with 0 steps per day, now they have 10766.19 steps per day and thus were moved to the 10000..11000 bin.
+The histogram with filled-in data differs from the original one by the eight days filled with daily mean distribution. In the original data these days were counted with 0 steps per day, now they have 10766.19 steps per day and thus were moved to the 10000..11000 bin.
 
 Calculation of the quantiles and the mean of the total steps per day for filled table:
 
@@ -197,13 +185,11 @@ summary(steps.per.day.filled$steps.per.day.filled)
 ##      41    9819   10770   10770   12810   21190
 ```
 
-Both, mean and median have increased compared to the [original data](#OriginalSummary).  
-
+Both, mean and median have increased compared to the original data.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-Add a factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day:
-
+As a base for this computation, the dataset with filled-in NA values is used.
 
 ```r
 library(chron)
@@ -211,6 +197,8 @@ library(chron)
 
 
 ```r
+# Add a factor variable in the dataset with two levels – “weekday” and “weekend”
+# indicating whether a given date is a weekday or weekend day:
 movement.data.filled$weekday <- as.factor(
     ifelse(
         is.weekend(as.Date(movement.data.filled$date)),
@@ -221,10 +209,11 @@ movement.data.filled$weekday <- as.factor(
 
 ```r
 g = ggplot(movement.data.filled, aes(x=time.of.day, y=steps.filled))
-g + geom_line(aes(y=steps.filled), stat="summary", fun.y = "mean") + facet_grid(weekday~.)
+g + geom_line(aes(y=steps.filled), stat="summary", fun.y = "mean") + 
+    facet_grid(weekday~.) +
+    labs(title = "Average Number of Steps per 5 Minute Time Interval") +
+    scale_x_datetime(labels = date_format("%H:%M"))
 ```
 
-![](PA1_template_files/figure-html/time series filled-1.png)<!-- -->
+![](PA1_template_files/figure-html/time series weekdays-1.png)<!-- -->
 
-
-```
